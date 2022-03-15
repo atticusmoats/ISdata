@@ -1,0 +1,121 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+Code for IS Data
+
+```{r}
+library(readxl)
+OSRGCs_Paper_Excel_Summary <- read_excel("OSRGCs-PaperExcelSummary.xlsx", 
+    sheet = "OSI Calcs")
+
+
+#Reogranizing data to be graphed and visualized
+
+library(tidyverse)
+tibble(OSRGCs_Paper_Excel_Summary) 
+
+library(readr)
+PubMed_Timeline_Results_by_Year <- read_csv("PubMed_Timeline_Results_by_Year.csv", 
+    skip = 1)
+
+tibble(PubMed_Timeline_Results_by_Year)
+
+```
+
+
+```{r}
+#Cleaning data and picking what to import
+OSRGC <- select(OSRGCs_Paper_Excel_Summary, Author, `Animal (species)`, Year, Theta = `Max Prerrefed θ from Horizontal`, OSI) %>% 
+  slice(1:15)
+
+#Tried Creating a scale for colors
+#sc_colors <- OSRGC$`Animal (species)`
+#sc_colors.col <- rainbow(length(sc_colors))
+#names(sc_colors.col) <- sc_colors
+
+#Fig1
+
+#Clean data- Remove NAs
+OSRGC_2 <-OSRGC[complete.cases(OSRGC),]
+
+
+Fig1 <- OSRGC_2 %>% 
+  ggplot(aes(x= Theta, 
+             y = OSI, 
+            color = `Animal (species)`)) + 
+  geom_point() + 
+  labs(x= "Preferred θ", y = "OSI",
+       title = "The preferred θ from each study versus the OSI ") 
+#caption = "Each preferred θ represents the max firing of an OSRGC for a specific study The OSI formula can be found earlier ")
+
+Fig1
+```
+
+```{r}
+#library(plotly)
+
+#Fig2 <- plot_ly (
+#  r = OSRGC_2$OSI,
+#  theta = OSRGC_2$Theta,
+#  mode= 'markers'
+#) 
+# Fig2 
+ 
+ 
+```
+
+
+```{r}
+  
+  Fig3 <- OSRGC_2 %>% 
+  ggplot(aes(x=OSI, fill = `Animal (species)`)) + 
+  geom_histogram(color = "white", bins = 10) + 
+  labs(title = "Histogram of the OSIs calculated from Each Study", y = "Count")
+  Fig3
+
+```
+```{r}
+
+  Fig4 <- OSRGC_2 %>% 
+  ggplot(aes(x=Theta, fill= `Animal (species)`)) + 
+  geom_histogram(color = "white", bins = 12) +
+  labs(x = "Max Preferred θ from Horizontal", title = "Histogram of the θ's", y = "Count" )
+  Fig4
+```
+```{r}
+Fig5 <- OSRGC %>% 
+  ggplot(aes(x=Year, fill = `Animal (species)`)) + 
+  geom_histogram(color = "white", bins = 12) 
+
+Fig6 <- PubMed_Timeline_Results_by_Year %>% 
+  ggplot(aes(x=Year, y = Count)) + 
+  geom_col()
+  
+
+library(cowplot)
+plot_grid(Fig5,Fig6, nrow = 2, ncol = 1)
+
+#Include PubMed Results by Year
+```
+
+```{r}
+library(tidyverse)
+summary_OSRGC_animal <- OSRGC %>% 
+  group_by(`Animal (species)`)  %>% 
+  summarise(count = n(), 
+            median_OSI = median(OSI, na.rm = TRUE),
+            st_dev_OSI = sd(OSI, na.rm= TRUE), 
+            median_Year = median(Year))
+  
+summary_OSRGC_animal
+install.packages('writexl')
+library(writexl)
+write_xlsx(summary_OSRGC_animal, 'C:\\Users\\IS Graphs\\ISCSV.xlsx')
+
+```
